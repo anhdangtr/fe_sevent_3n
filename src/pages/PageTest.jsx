@@ -138,11 +138,9 @@ return (
     {/* Main Events Section */}
     <section className="events-section">
       <div className="container">
-<<<<<<< HEAD
+
         {page === 1 && !search && (
-=======
-        {page === 1 && (
->>>>>>> e4638f3c9fcc87b5a3ea396a6ba1b13a7d8d8252
+
           <div className="filters">
             <label htmlFor="category" className="category-label">
               Explore categories
