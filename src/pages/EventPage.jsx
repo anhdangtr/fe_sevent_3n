@@ -331,26 +331,26 @@ const EventPage = () => {
           {/* Event Info Section */}
           <div className="event-info-section">
             <div className="info-item">
-              <span className="info-label">⏰ Thời gian bắt đầu:</span>
+              <span className="info-label"> Thời gian bắt đầu:</span>
               <span className="info-value">
                 {formatDate(event.startDate)}
               </span>
             </div>
 
             <div className="info-item">
-              <span className="info-label">⏰ Thời gian kết thúc:</span>
+              <span className="info-label"> Thời gian kết thúc:</span>
               <span className="info-value">
                 {formatDate(event.endDate)}
               </span>
             </div>
 
             <div className="info-item">
-              <span className="info-label">📍 Địa điểm:</span>
+              <span className="info-label"> Địa điểm:</span>
               <span className="info-value">{event.location || "Chưa xác định"}</span>
             </div>
 
             <div className="info-item">
-              <span className="info-label">🏢 Tổ chức:</span>
+              <span className="info-label"> Tổ chức:</span>
               <span className="info-value">
                 {event.organization || "Chưa xác định"}
               </span>
@@ -358,7 +358,7 @@ const EventPage = () => {
 
             {event.formSubmissionDeadline && (
               <div className="info-item">
-                <span className="info-label">📝 Hạn đăng ký:</span>
+                <span className="info-label"> Hạn đăng ký:</span>
                 <span className="info-value">
                   {formatDate(event.formSubmissionDeadline)}
                 </span>
