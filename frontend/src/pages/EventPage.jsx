@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import logoImage from "../assets/logo.png";
-import ReminderModal from "../components/ReminderModal";
-import SaveModal from "../components/SaveModal";
 import "./EventPage.css";
 
 const EventPage = () => {
@@ -16,12 +14,9 @@ const EventPage = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [activeNav, setActiveNav] = useState("home");
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
-  const [showReminderModal, setShowReminderModal] = useState(false);
-  const [showSaveModal, setShowSaveModal] = useState(false);
 
   const isLoggedIn = !!localStorage.getItem("authToken");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-  const token = localStorage.getItem("authToken");
 
   const location = useLocation();
 
@@ -49,43 +44,29 @@ const EventPage = () => {
   const fetchEventDetails = async () => {
     try {
       setLoading(true);
-
+      
       // Validate eventId format
       if (!eventId || !eventId.match(/^[0-9a-fA-F]{24}$/)) {
         setError(`Event ID không hợp lệ: ${eventId}/:id`);
         setLoading(false);
         return;
       }
-
+      
       const url = `${API_URL}/events/${eventId}`;
       console.log('Fetching from:', url);
-
-      // Require token to view event details
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        navigate('/auth/LogIn', { state: { from: location.pathname, message: 'Vui lòng đăng nhập để truy cập sự kiện' } });
-        return;
-      }
-
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      
+      const response = await axios.get(url);
       console.log('Response:', response.data);
-
+      
       if (response.data.success) {
         setEvent(response.data.data);
         setLikeCount(response.data.data.interestingCount || 0);
       } else {
-        setError('Sự kiện không tồn tại');
+        setError("Sự kiện không tồn tại");
       }
     } catch (err) {
-      console.error('Fetch event error:', err.response?.data || err.message);
-      const message = err.response?.data?.message || 'Không thể tải chi tiết sự kiện';
-      setError(message);
-      if (err.response?.status === 401 || (message && message.toLowerCase().includes('vui lòng đăng nhập'))) {
-        navigate('/auth/LogIn', { state: { from: location.pathname, message } });
-      }
+      console.error("Fetch event error:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Không thể tải chi tiết sự kiện");
     } finally {
       setLoading(false);
     }
@@ -95,14 +76,17 @@ const EventPage = () => {
     if (!isLoggedIn) return;
 
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
-      const response = await axios.get(`${API_URL}/events/${eventId}/check-like`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(
+        `${API_URL}/events/${eventId}/check-like`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`
+          }
+        }
+      );
       setIsLiked(response.data.isLiked);
     } catch (err) {
-      console.error('Check like error:', err);
+      console.error("Check like error:", err);
     }
   };
 
@@ -338,49 +322,35 @@ const EventPage = () => {
               onClick={handleLikeClick}
             >
               <span className="heart-icon">
-                {isLiked ? "❍" : "🤍"}
+                {isLiked ? "❤️" : "🤍"}
               </span>
               <span className="like-count">{likeCount}</span>
-            </button>
-            <button
-              className="register-btn"
-              onClick={() => setShowReminderModal(true)}
-              style={{ backgroundColor: '#FF9800' }}
-            >
-              ⏰ Reminder
-            </button>
-            <button
-              className="register-btn"
-              onClick={() => setShowSaveModal(true)}
-              style={{ backgroundColor: '#4CAF50' }}
-            >
-              💾 Save
             </button>
           </div>
 
           {/* Event Info Section */}
           <div className="event-info-section">
             <div className="info-item">
-              <span className="info-label">⏰ Thời gian bắt đầu:</span>
+              <span className="info-label"> Thời gian bắt đầu:</span>
               <span className="info-value">
                 {formatDate(event.startDate)}
               </span>
             </div>
 
             <div className="info-item">
-              <span className="info-label">⏰ Thời gian kết thúc:</span>
+              <span className="info-label"> Thời gian kết thúc:</span>
               <span className="info-value">
                 {formatDate(event.endDate)}
               </span>
             </div>
 
             <div className="info-item">
-              <span className="info-label">📍 Địa điểm:</span>
+              <span className="info-label"> Địa điểm:</span>
               <span className="info-value">{event.location || "Chưa xác định"}</span>
             </div>
 
             <div className="info-item">
-              <span className="info-label">🏢 Tổ chức:</span>
+              <span className="info-label"> Tổ chức:</span>
               <span className="info-value">
                 {event.organization || "Chưa xác định"}
               </span>
@@ -388,7 +358,7 @@ const EventPage = () => {
 
             {event.formSubmissionDeadline && (
               <div className="info-item">
-                <span className="info-label">📝 Hạn đăng ký:</span>
+                <span className="info-label"> Hạn đăng ký:</span>
                 <span className="info-value">
                   {formatDate(event.formSubmissionDeadline)}
                 </span>
@@ -419,25 +389,6 @@ const EventPage = () => {
           </div>
         </div>
       </div>
-
-      {/* Reminder Modal */}
-      <ReminderModal
-        eventId={eventId}
-        eventTitle={event?.title || ''}
-        isOpen={showReminderModal}
-        onClose={() => setShowReminderModal(false)}
-        API_URL={API_URL}
-        token={token}
-      />
-
-      {/* Save Modal */}
-      <SaveModal
-        eventId={eventId}
-        isOpen={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        API_URL={API_URL}
-        token={token}
-      />
     </div>
   );
 };
