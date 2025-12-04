@@ -12,8 +12,13 @@ const Navbar = ({ activeNav, setActiveNav }) => {
   let user = null;
 
   try {
-    const token = localStorage.getItem("token");
-    if (token) user = jwtDecode(token);
+    const token = localStorage.getItem("authToken");
+    // console.log(token);
+    if (token) 
+      {
+        user = jwtDecode(token)
+      };
+    // console.log(user);
   } catch (err) {
     console.error("Decode token error", err);
   }
