@@ -47,7 +47,7 @@ function User() {
 
         console.log('[updateRole] Response:', data);
 
-        // Token sai hoặc hết hạn
+        
         if (res.status === 401) {
             alert("Token hết hạn! Vui lòng đăng nhập lại.");
             localStorage.removeItem("authToken");   
