@@ -28,10 +28,7 @@ function User() {
    const updateRole = async (id) => {
     try {
         const token = localStorage.getItem("authToken");
-
-        console.log('[updateRole] Token length:', token ? token.length : 0);
-        console.log('[updateRole] Token preview:', token ? token.substring(0, 50) + '...' : 'null');
-
+        
         if (!token) {
             alert("Bạn chưa đăng nhập!");
             window.location.href = "/auth/LogIn";
@@ -53,8 +50,8 @@ function User() {
         // Token sai hoặc hết hạn
         if (res.status === 401) {
             alert("Token hết hạn! Vui lòng đăng nhập lại.");
-            localStorage.removeItem("authToken");   // <== FIX
-            window.location.href = "/auth/LogIn";   // <== redirect OK
+            localStorage.removeItem("authToken");   
+            window.location.href = "/auth/LogIn";  
             return;
         }
 
@@ -65,16 +62,16 @@ function User() {
 
         alert("Đổi role thành công!");
 
-        // Nếu đổi role của chính mình → logout
+        
         if (data.logout) {
-            alert("Bạn vừa thay đổi quyền của chính mình. Hệ thống sẽ đăng xuất bạn.");
+            alert("Bạn vừa thay đổi quyền. Hệ thống sẽ đăng xuất bạn.");
 
-            localStorage.removeItem("authToken");      // <== FIX
-            window.location.href = "/auth/LogIn";      // <== redirect đúng
+            localStorage.removeItem("authToken");      
+            window.location.href = "/auth/LogIn";      
             return;
         }
 
-        // Nếu không phải mình → chỉ reload danh sách
+       
         fetchUser();
 
     } catch (error) {
