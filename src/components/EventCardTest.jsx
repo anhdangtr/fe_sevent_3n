@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./EventCardTest.css";
 
@@ -7,17 +7,121 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const EventCardTest = ({ event }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // ==============================
+ 
   // 1. Tạo state cho like/save và số lượng
-  // ==============================
-  const [liked, setLiked] = useState(event.isLiked || false); // trạng thái like
-  const [likeCount, setLikeCount] = useState(event.interestingCount || 0); // số lượng like
-  const [saved, setSaved] = useState(event.isSaved || false); // trạng thái save
-  const [saveCount, setSaveCount] = useState(event.saveCount || 0); // số lượng save
+
+  const [liked, setLiked] = useState(event.isLiked || false);
+  const [likeCount, setLikeCount] = useState(event.interestingCount || 0);
+  const [saved, setSaved] = useState(event.isSaved || false);
+  const [saveCount, setSaveCount] = useState(event.saveCount || 0);
+  const [loading, setLoading] = useState(true); // trạng thái loading
+
+  //debounce xử lý sì pam
+  const debounceTimeoutRef = useRef({
+  like: null,
+  save: null
+});
+
+  const DEBOUNCE_DELAY = 500; // 500ms
 
   // ==============================
-  // 2. Format ngày, giờ và tính khoảng thời gian
+  // 2. useEffect - Check trạng thái like và save khi component mount
+  // ==============================
+  useEffect(() => {
+    const checkStatuses = async () => {
+      const token = localStorage.getItem("authToken");
+      
+      // Nếu không có token, không cần check
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Check like status
+        const likeRes = await fetch(`${API_URL}/events/${event._id}/check-liked`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const likeData = await likeRes.json();
+        if (likeData.success) {
+          setLiked(likeData.isLiked);
+          if (likeData.likeCount !== undefined) {
+            setLikeCount(likeData.likeCount);
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi check status:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkStatuses();
+  }, [event._id]); // re-check khi event id thay đổi
+
+// THÊM VÀO useEffect - Check Save Status khi component mount
+useEffect(() => {
+  const checkStatuses = async () => {
+    const token = localStorage.getItem("authToken");
+    
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Check like status
+      const likeRes = await fetch(`${API_URL}/events/${event._id}/check-liked`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const likeData = await likeRes.json();
+      if (likeData.success) {
+        setLiked(likeData.isLiked);
+        if (likeData.likeCount !== undefined) {
+          setLikeCount(likeData.likeCount);
+        }
+      }
+
+      // ========== THÊM: Check save status ==========
+      const saveRes = await fetch(`${API_URL}/events/${event._id}/check-saved`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const saveData = await saveRes.json();
+      if (saveData.success) {
+        setSaved(saveData.isSaved);
+        if (saveData.saveCount !== undefined) {
+          setSaveCount(saveData.saveCount);
+        }
+      }
+      // ==========================================
+
+    } catch (err) {
+      console.error("Lỗi check status:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  checkStatuses();
+}, [event._id]);
+
+  // ==============================
+  // 3. Format ngày, giờ và tính khoảng thời gian
   // ==============================
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -48,26 +152,36 @@ const EventCardTest = ({ event }) => {
   const daysUntilEvent = getDaysDifference(event.startDate);
 
   // ==============================
-  // 3. Điều hướng đến trang chi tiết
+  // 4. Điều hướng đến trang chi tiết
   // ==============================
   const handleCardClick = () => {
     navigate(`/events/${event._id}`);
   };
 
-  // ==============================
-  // 4. Xử lý Like
-  // ==============================
-  const handleLike = async (e) => {
-    e.stopPropagation(); // ngăn click lan ra div card
+  // 5. Xử lý Like
+const handleLike = async (e) => {
+  e.stopPropagation();
 
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      navigate("/auth/LogIn", {
-        state: { from: location.pathname, message: "Vui lòng đăng nhập để truy cập sự kiện" }
-      });
-      return;
-    }
+  const token = localStorage.getItem("authToken");
+  if (!token) {
+    navigate("/auth/LogIn", {
+      state: { from: location.pathname, message: "Vui lòng đăng nhập để truy cập sự kiện" }
+    });
+    return;
+  }
 
+  // Cập nhật UI ngay lập tức
+  const newLiked = !liked;
+  setLiked(newLiked);
+  setLikeCount(newLiked ? likeCount + 1 : likeCount - 1);
+
+  //Hủy timeout cũ (nếu còn)
+  if (debounceTimeoutRef.current.like) {
+    clearTimeout(debounceTimeoutRef.current.like);
+  }
+
+  // Đặt timeout mới - chờ 500ms rồi gửi API
+  debounceTimeoutRef.current.like = setTimeout(async () => {
     try {
       const res = await fetch(`${API_URL}/events/${event._id}/toggle-like`, {
         method: "POST",
@@ -80,31 +194,42 @@ const EventCardTest = ({ event }) => {
       const data = await res.json();
 
       if (data.success) {
-        // ==============================
-        // 4a. Cập nhật trạng thái nút và số lượng ngay lập tức
-        // ==============================
+        // Cập nhật lại từ server (để sync)
         setLiked(data.data.isLiked);
         setLikeCount(data.data.interestingCount);
       }
     } catch (err) {
       console.error("Lỗi toggle like:", err);
     }
-  };
+  }, DEBOUNCE_DELAY);
+};
 
   // ==============================
-  // 5. Xử lý Save
+  // 6. Xử lý Save
   // ==============================
-  const handleSave = async (e) => {
-    e.stopPropagation();
+const handleSave = async (e) => {
+  e.stopPropagation();
 
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      navigate("/auth/LogIn", {
-        state: { from: location.pathname, message: "Vui lòng đăng nhập để truy cập sự kiện" }
-      });
-      return;
-    }
+  const token = localStorage.getItem("authToken");
+  if (!token) {
+    navigate("/auth/LogIn", {
+      state: { from: location.pathname, message: "Vui lòng đăng nhập để truy cập sự kiện" }
+    });
+    return;
+  }
 
+  // Cập nhật UI ngay lập tức
+  const newSaved = !saved;
+  setSaved(newSaved);
+  setSaveCount(newSaved ? saveCount + 1 : saveCount - 1);
+
+  // Hủy timeout cũ
+  if (debounceTimeoutRef.current.save) {
+    clearTimeout(debounceTimeoutRef.current.save);
+  }
+
+  //Đặt timeout mới - chờ 500ms rồi gửi API
+  debounceTimeoutRef.current.save = setTimeout(async () => {
     try {
       const res = await fetch(`${API_URL}/events/${event._id}/toggle-save`, {
         method: "POST",
@@ -117,16 +242,16 @@ const EventCardTest = ({ event }) => {
       const data = await res.json();
 
       if (data.success) {
-        // ==============================
-        // 5a. Cập nhật trạng thái nút và số lượng ngay lập tức
-        // ==============================
+        // Cập nhật lại từ server (để sync)
         setSaved(data.data.isSaved);
         setSaveCount(data.data.saveCount);
       }
     } catch (err) {
       console.error("Lỗi toggle save:", err);
     }
-  };
+  }, DEBOUNCE_DELAY);
+};
+
 
   return (
     <div className="event-card" onClick={handleCardClick}>
@@ -147,16 +272,18 @@ const EventCardTest = ({ event }) => {
         {/* Action Buttons */}
         <div className="event-actions">
           <button
-            className={`action-btn like-btn ${liked ? "active" : ""}`} // active nếu đã like
+            className={`action-btn like-btn ${liked ? "active" : ""}`}
             onClick={handleLike}
             title="Thích"
+            disabled={loading} // vô hiệu hóa nút khi đang load
           >
             ♥️
           </button>
           <button
-            className={`action-btn save-btn ${saved ? "active" : ""}`} // active nếu đã save
+            className={`action-btn save-btn ${saved ? "active" : ""}`}
             onClick={handleSave}
             title="Lưu"
+            disabled={loading} // vô hiệu hóa nút khi đang load
           >
             🔖
           </button>
@@ -198,10 +325,10 @@ const EventCardTest = ({ event }) => {
         {/* Stats */}
         <div className="event-stats">
           <div className="stat-item">
-            <span>❤️ {likeCount}</span> {/* dùng state cập nhật */}
+            <span>❤️ {likeCount}</span>
           </div>
           <div className="stat-item">
-            <span>🔖 {saveCount}</span> {/* dùng state cập nhật */}
+            <span>🔖 {saveCount}</span>
           </div>
           {daysUntilEvent > 0 && (
             <div className="stat-item days-left">
