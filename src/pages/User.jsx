@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import "./User.css";
 
 function User() {
@@ -24,36 +25,61 @@ function User() {
         }
     };
 
-    const updateRole = async (id) => {
+   const updateRole = async (id) => {
     try {
-        const token = localStorage.getItem("token");
-        console.log(token);
+        const token = localStorage.getItem("authToken");
+
+        console.log('[updateRole] Token length:', token ? token.length : 0);
+        console.log('[updateRole] Token preview:', token ? token.substring(0, 50) + '...' : 'null');
+
+        if (!token) {
+            alert("Bạn chưa đăng nhập!");
+            window.location.href = "/auth/LogIn";
+            return;
+        }
+
         const res = await fetch(`${API_URL}/user/updateRoleUser/${id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            }
+                "Authorization": `Bearer ${token}`,
+            },
         });
 
         const data = await res.json();
 
-        if (!data.success) {
-            alert(data.message);
+        console.log('[updateRole] Response:', data);
+
+        // Token sai hoặc hết hạn
+        if (res.status === 401) {
+            alert("Token hết hạn! Vui lòng đăng nhập lại.");
+            localStorage.removeItem("authToken");   // <== FIX
+            window.location.href = "/auth/LogIn";   // <== redirect OK
             return;
         }
 
-        alert("Role changed!");
-
-        if (data.logout) {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
+        if (!data.success) {
+            alert(data.message || "Có lỗi xảy ra!");
+            return;
         }
 
+        alert("Đổi role thành công!");
+
+        // Nếu đổi role của chính mình → logout
+        if (data.logout) {
+            alert("Bạn vừa thay đổi quyền của chính mình. Hệ thống sẽ đăng xuất bạn.");
+
+            localStorage.removeItem("authToken");      // <== FIX
+            window.location.href = "/auth/LogIn";      // <== redirect đúng
+            return;
+        }
+
+        // Nếu không phải mình → chỉ reload danh sách
         fetchUser();
 
     } catch (error) {
-        console.log(error);
+        console.error('[updateRole] Error:', error);
+        alert("Lỗi kết nối server!");
     }
 };
 
