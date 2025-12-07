@@ -146,7 +146,7 @@ const Navbar = ({ activeNav, setActiveNav }) => {
                     onClick={() => {
                       localStorage.removeItem("authToken");
                       localStorage.removeItem("user");
-                      window.location.reload();
+                      navigate("/");
                     }}
                   >
                     Logout
