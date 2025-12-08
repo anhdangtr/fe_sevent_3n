@@ -122,7 +122,7 @@ const LoginForm = () => {
       <button type="submit" style={buttonStyle}>Log in</button>
       <br />
        <p style={registerLink}>
-         Don't have an account? <a href="/register">Register</a>
+         Don't have an account? <a href="/auth/SignUp">Sign up</a>
         </p>
     </form>
   );

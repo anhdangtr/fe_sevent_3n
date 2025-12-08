@@ -137,7 +137,7 @@ const SignUpForm = () => {
       <button type="submit" style={buttonStyle}>Create</button>
       <br />
         <p style={loginLink}>
-          Already have an account? <a href="/login">Login</a>
+          Already have an account? <a href="/auth/LogIn">Login</a>
         </p>
     </form>
   );
