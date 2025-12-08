@@ -37,18 +37,22 @@ const PageTest = () => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/events`, {
-        params: {
-          page,
-          limit: LIMIT,
-          search: search || undefined,
-          category: category !== "all" ? category : undefined
-        }
-      });
+      const params = {
+        page,
+        limit: LIMIT,
+        search: search || undefined,
+        category: category && category !== "all" ? category : undefined
+      };
+
+      console.debug("fetchEvents params:", params);
+      const response = await axios.get(`${API_URL}/events`, { params });
+      console.debug("fetchEvents response:", response?.data?.pagination || response?.data?.data?.length);
 
       if (response.data.success) {
         setEvents(response.data.data);
         setTotalPages(response.data.pagination.pages);
+      } else {
+        console.warn('Fetch events returned success=false', response.data);
       }
     } catch (error) {
       console.error("Fetch events error:", error);
@@ -80,7 +84,6 @@ const PageTest = () => {
   const handleCategoryChange = (value) => {
     setCategory(value);
     setPage(1);
-    fetchEvents();
   };
 
   const handleNextPage = () => {
@@ -147,6 +150,13 @@ const PageTest = () => {
                 Explore categories
               </h2>
               <div className="category-options">
+                <div
+                  className={`category-option ${category === "all" ? "active" : ""}`}
+                  onClick={() => handleCategoryChange("all")}
+                >
+                  <span style={{fontSize:28, marginRight:8}}>📂</span>
+                  <span className="category-name">All</span>
+                </div>
                 <div
                   className={`category-option ${category === "6935c87fdf7bfe8ffc73367d" ? "active" : ""}`}
                   onClick={() => handleCategoryChange("6935c87fdf7bfe8ffc73367d")}

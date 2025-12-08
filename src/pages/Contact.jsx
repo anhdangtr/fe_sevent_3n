@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 
->>>>>>> 584409e81a9baa83e4f5df3063a06e18dfbd3d83
 // src/pages/Contact.jsx  (or wherever you put pages)
 import React from "react";
 import "./Contact.css";
@@ -77,10 +74,7 @@ function Contact() {
       </div>
     </div>
     </div>
-<<<<<<< HEAD
-=======
 
->>>>>>> 584409e81a9baa83e4f5df3063a06e18dfbd3d83
   );
 }
 

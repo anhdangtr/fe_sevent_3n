@@ -126,6 +126,15 @@ const Navbar = ({ activeNav, setActiveNav }) => {
                   <button
                     className="avatar-menu-item"
                     onClick={() => {
+                      navigate("/liked");
+                      closeAvatarMenu();
+                    }}
+                  >
+                    Liked event
+                  </button>
+                  <button
+                    className="avatar-menu-item"
+                    onClick={() => {
                       navigate("/saved");
                       closeAvatarMenu();
                     }}
